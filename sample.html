@@ -12,6 +12,12 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-autocomplete/1.0.7/jquery.auto-complete.js"></script>
   <script src="https://mytm.tk/pcmsk/bootstrap-tokenfield.js"></script>
+
+  <style>
+    .ui-autocomplete {
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
   <div class="modal fade" tabindex="-1" role="dialog" id="test">
@@ -38,15 +44,39 @@
   </div>
 
   <script>
-    $('#test').modal('show');
+    var CITIES = ['Екатеринбург',
+                  'Пермь',
+                  'Еще какой-то город',
+                  'Москва',
+                  'Сыктывкар',
+                  'Краснодар',
+                  'Зоокамск',
+                  'Тобольск',
+                  'Санкт-Петербург'];
 
-    $('#regions_list').tokenfield({
-      autocomplete: {
-        source: ['Екатеринбург','Пермь','Еще какой-то город','Москва','Сыктывкар','Краснодар','Зоокамск','Тобольск','Санкт-Петербург'],
-        delay: 100
-      },
-      showAutocompleteOnFocus: true
-    });
+    $('#test').modal('show');
+    $('#regions_list')
+      .tokenfield({
+        autocomplete: {
+          source: function(request, response) {
+            var selected = $.map($('#regions_list').val().split(','), $.trim);
+
+            response(CITIES.filter(function (x) {
+                return selected.indexOf(x) < 0 && x.toLowerCase().indexOf(request.term.toLowerCase()) >= 0
+              }
+            ).sort());
+          },
+          delay: 100
+        },
+        showAutocompleteOnFocus: true,
+        createTokensOnBlur: true
+      })
+      .on('tokenfield:edittoken', function () {
+        return false;
+      })
+      .on('tokenfield:createtoken', function (e) {
+        console.log(e);
+      });
   </script>
 </body>
 </html>

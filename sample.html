@@ -42,7 +42,6 @@
       </div>
     </div>
   </div>
-
   <script>
     var CITIES = ['Екатеринбург',
                   'Пермь',
@@ -55,14 +54,18 @@
                   'Санкт-Петербург'];
 
     $('#test').modal('show');
+    $('button').click( function () {
+      alert($('#regions_list').val());
+    });
+
     $('#regions_list')
       .tokenfield({
         autocomplete: {
           source: function(request, response) {
-            var selected = $.map($('#regions_list').val().split(','), $.trim);
+            var selected_cities = $.map($('#regions_list').val().split(','), $.trim);
 
             response(CITIES.filter(function (x) {
-                return selected.indexOf(x) < 0 && x.toLowerCase().indexOf(request.term.toLowerCase()) >= 0
+                return selected_cities.indexOf(x) < 0 && x.toLowerCase().indexOf(request.term.toLowerCase()) >= 0
               }
             ).sort());
           },
@@ -75,7 +78,22 @@
         return false;
       })
       .on('tokenfield:createtoken', function (e) {
-        console.log(e);
+        var value = $.trim(e.attrs.value).toLowerCase();
+        var cities_lower = $.map(CITIES, function (x) { return x.toLowerCase() } );
+
+        defined_index = cities_lower.indexOf(value);
+
+        if (defined_index < 0) {
+          return false;
+        }
+
+        value = CITIES[defined_index];
+        var selected_cities = $.map($(this).val().split(','), $.trim);
+        if (!(selected_cities.indexOf(value) < 0)) {
+          return false;
+        }
+
+        e.attrs.value = value;
       });
   </script>
 </body>

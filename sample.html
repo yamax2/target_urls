@@ -23,7 +23,7 @@
   <div class="modal fade" tabindex="-1" role="dialog" id="test">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
-        <form class="" id="test_form" action="/" accept-charset="UTF-8" method="post">
+        <form class="target-url-actions-form" id="test_form" action="/" accept-charset="UTF-8" method="post">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">Изменение целевых ссылок (100500)</h4>
@@ -31,7 +31,39 @@
           <div class="modal-body">
             <div class="form-group">
               <label class="control-label" for="regions_list">Регионы для изменения</label>
-              <input class="form-control" required="required" type="text" autofocus="autofocus" name="form[regions]" id="regions_list">
+              <input class="form-control regions-list" required="required" type="text" value="Екатеринбург" autofocus="autofocus" name="form[regions]" id="regions_list">
+            </div>
+            <div class="form-group">
+              <label class="control-label">Выберите действие</label><br>
+              <div class="btn-group btn-group-justified btn-action-group" role="group">
+                <div class="btn-group" role="group">
+                  <button type="button" data-action="0" class="btn btn-success btn-action-selector">Добавить регионы</button>
+                </div>
+                <div class="btn-group" role="group">
+                  <button type="button" data-action="1" class="btn btn-default btn-action-selector">Остановить регионы</button>
+                </div>
+                <div class="btn-group" role="group">
+                  <button type="button" data-action="2" class="btn btn-default btn-action-selector">Изменить ставку/бюджет</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group other-group">
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="control-label">Бюджет</label>
+                  <div class="input-group">
+                    <input class="form-control" step="any" type="number" name="form[budget]" id="region_budget">
+                    <div class="input-group-addon">руб.</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="control-label">Нач. ставка</label>
+                  <div class="input-group">
+                    <input class="form-control" step="any" type="number" name="form[rate]" id="region_rate">
+                    <div class="input-group-addon">руб.</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -54,11 +86,11 @@
                   'Санкт-Петербург'];
 
     $('#test').modal('show');
-    $('button').click( function () {
+    $('.btn-primary').click( function () {
       alert($('#regions_list').val());
     });
 
-    $('#regions_list')
+    $('.target-url-actions-form .regions-list')
       .tokenfield({
         autocomplete: {
           source: function(request, response) {
@@ -94,6 +126,28 @@
         }
 
         e.attrs.value = value;
+      });
+
+      $('.target-url-actions-form .btn-action-selector').on('click', function () {
+        $button = $(this);
+        $form = $button.closest('form');
+        value = $button.data('action');
+
+        if ($button.is('.btn-success')) {
+          return;
+        }
+
+        $button
+          .closest('.btn-action-group')
+          .find('.btn-action-selector')
+          .removeClass('btn-success')
+          .addClass('btn-default');
+
+        $button
+          .removeClass('btn-default')
+          .addClass('btn-success');
+
+        $('.other-group', $form).toggle(value != 1);
       });
   </script>
 </body>

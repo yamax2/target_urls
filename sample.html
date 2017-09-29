@@ -24,6 +24,8 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <form class="target-url-actions-form" id="test_form" action="/" accept-charset="UTF-8" method="post">
+          <input type="hidden" data-field="regions" name="form[regions]" value="">
+          <input type="hidden" data-field="action" name="form[action]" value="">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">Изменение целевых ссылок (100500)</h4>
@@ -31,7 +33,7 @@
           <div class="modal-body">
             <div class="form-group">
               <label class="control-label" for="regions_list">Регионы для изменения</label>
-              <input class="form-control regions-list" required="required" type="text" value="Екатеринбург" autofocus="autofocus" name="form[regions]" id="regions_list">
+              <input class="form-control regions-list" data-regions='{"10":"Екатеринбург","20":"Пермь","30":"Еще какой-то город","40":"Москва","50":"Сыктывкар","60":"Краснодар","70":"Зоокамск","80":"Тобольск","90":"Санкт-Петербург"}' required="required" data-zz="qq" type="text" autofocus="autofocus" id="regions_list">
             </div>
             <div class="form-group">
               <label class="control-label">Выберите действие</label><br>
@@ -75,31 +77,30 @@
     </div>
   </div>
   <script>
-    var CITIES = ['Екатеринбург',
-                  'Пермь',
-                  'Еще какой-то город',
-                  'Москва',
-                  'Сыктывкар',
-                  'Краснодар',
-                  'Зоокамск',
-                  'Тобольск',
-                  'Санкт-Петербург'];
-
     $('#test').modal('show');
+
     $('.btn-primary').click( function () {
-      alert($('#regions_list').val());
+      alert(JSON.stringify($('form').serializeArray(), null, 2));
     });
+
+    function splitRegions(value) {
+      return $.map(value.split(','), $.trim);
+    }
 
     $('.target-url-actions-form .regions-list')
       .tokenfield({
         autocomplete: {
           source: function(request, response) {
-            var selected_cities = $.map($('#regions_list').val().split(','), $.trim);
+            // Список значений доступных для выбора: не выбраны и присутствуют в списке городов
+            $input = $(this.element).closest('.tokenfield').find('.regions-list');
+            regions = $input.data('regions');
 
-            response(CITIES.filter(function (x) {
-                return selected_cities.indexOf(x) < 0 && x.toLowerCase().indexOf(request.term.toLowerCase()) >= 0
+            selected = $input.data('selected') || [];
+            response($.map(regions, function(name, id) {
+              if (selected.indexOf(id) < 0 && name.toLowerCase().indexOf(request.term.toLowerCase()) >= 0) {
+                return name;
               }
-            ).sort());
+            }));
           },
           delay: 100
         },
@@ -107,28 +108,54 @@
         createTokensOnBlur: true
       })
       .on('tokenfield:edittoken', function () {
+        // редактирование запрещено
         return false;
       })
       .on('tokenfield:createtoken', function (e) {
+        // Проверка добавляемого города
+        // Должно присутсвовать в списке городов и отсутствовать в уже выбранных
+        $input = $(this);
+
+        regions = $input.data('regions');
+        selected = $input.data('selected') || [];
+
         var value = $.trim(e.attrs.value).toLowerCase();
-        var cities_lower = $.map(CITIES, function (x) { return x.toLowerCase() } );
+        var region_id = null;
 
-        defined_index = cities_lower.indexOf(value);
+        $.each(regions, function (id, name) {
+          if (name.toLowerCase() === value) {
+            region_id = id;
+            false;
+          }
+        });
 
-        if (defined_index < 0) {
-          return false;
+        if (region_id == null || !(selected.indexOf(region_id) < 0)) {
+          e.preventDefault();
         }
 
-        value = CITIES[defined_index];
-        var selected_cities = $.map($(this).val().split(','), $.trim);
-        if (!(selected_cities.indexOf(value) < 0)) {
-          return false;
-        }
+        e.attrs.value = regions[region_id];
+        e.attrs.label = regions[region_id];
+      })
+      .on('change', function (e) {
+        // Разбор введенных значений и преобразование в список id, заполнение скрытого input
+        $input = $(this);
+        $form = $input.closest('form');
 
-        e.attrs.value = value;
+        regions = $input.data('regions');
+        values = splitRegions($(this).val());
+
+        ids = $.map(regions, function(name, id) {
+          if (!(values.indexOf(name) < 0)) {
+            return id;
+          }
+        });
+
+        $input.data('selected', ids);
+        $('input[data-field="regions"]', $form).val(ids);
       });
 
       $('.target-url-actions-form .btn-action-selector').on('click', function () {
+        // Переключение зеленой кнопки и заполнение скрытого input формы
         $button = $(this);
         $form = $button.closest('form');
         value = $button.data('action');
@@ -137,9 +164,7 @@
           return;
         }
 
-        $button
-          .closest('.btn-action-group')
-          .find('.btn-action-selector')
+        $('.btn-action-selector', $form)
           .removeClass('btn-success')
           .addClass('btn-default');
 
@@ -148,6 +173,7 @@
           .addClass('btn-success');
 
         $('.other-group', $form).toggle(value != 1);
+        $('input[data-field="action"]', $form).val(value);
       });
   </script>
 </body>

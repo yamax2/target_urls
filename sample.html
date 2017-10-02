@@ -77,8 +77,6 @@
     </div>
   </div>
   <script>
-    $('#test').modal('show');
-
     $('.btn-primary').click( function () {
       alert(JSON.stringify($('form').serializeArray(), null, 2));
     });
@@ -175,6 +173,8 @@
         $('.other-group', $form).toggle(value != 1);
         $('input[data-field="action"]', $form).val(value);
       });
+
+      $('#test').modal('show');
   </script>
 </body>
 </html>
